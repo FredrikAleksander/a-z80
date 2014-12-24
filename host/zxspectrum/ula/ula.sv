@@ -22,6 +22,7 @@ module ula
     //-------- Clocks and reset -----------------
     input wire CLOCK_27,            // Input clock 27 MHz
     input wire CLOCK_24,            // Input clock 24 MHz
+    input wire turbo,               // Turbo speed (3.5 MHz x 2 = 7.0 MHz)
     output wire clk_vram,
     input wire reset,               // KEY0 is reset
     output wire locked,             // PLL is locked signal
@@ -42,6 +43,7 @@ module ula
     //-------- PS/2 Keyboard --------------------
     input wire PS2_CLK,
     input wire PS2_DAT,
+    output wire pressed,
 
     //-------- Audio (Tape player) --------------
     inout wire I2C_SCLK,
@@ -52,6 +54,7 @@ module ula
     output wire AUD_BCLK,
     output wire AUD_DACDAT,
     input wire AUD_ADCDAT,
+    output reg beeper,
 
     //-------- VGA connector --------------------
     output wire [3:0] VGA_R,
@@ -90,6 +93,8 @@ begin
         // Let us hear the tape loading!
         pcm_outl[12] <= pcm_inl[14] | pcm_inr[14];
         pcm_outr[12] <= pcm_inl[14] | pcm_inr[14];
+        // Let us see the tape loading!
+        beep <= (pcm_inl[14] | pcm_inr[14]) ^ D[4] ^ D[3];
     end
 end
 
@@ -110,6 +115,15 @@ reg  [15:0] pcm_outr;
 i2s_intf i2s_intf_( .CLK(CLOCK_24), .nRESET(reset),
     .PCM_INL(pcm_inl[15:0]), .PCM_INR(pcm_inr[15:0]), .PCM_OUTL(pcm_outl[15:0]), .PCM_OUTR(pcm_outr[15:0]),
     .I2S_MCLK(AUD_XCK), .I2S_LRCLK(AUD_ADCLRCK), .I2S_BCLK(AUD_BCLK), .I2S_DOUT(AUD_DACDAT), .I2S_DIN(AUD_ADCDAT) );
+
+// Show the beeper visually by dividing the frequency with some factor to generate blinks
+reg beep;                           // Beeper latch
+reg [6:0] beepcnt;                  // Beeper counter
+always @(posedge beep)
+begin
+    beepcnt <= beepcnt - '1;
+    if (beepcnt==0) beeper <= ~beeper;
+end
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Instantiate ULA's video subsystem
