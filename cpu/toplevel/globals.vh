@@ -80,8 +80,8 @@ wire ctl_flags_use_cf2;
 wire ctl_flags_hf2_we;
 wire ctl_flags_nf_clr;
 wire ctl_alu_zero_16bit;
-wire [1:0] ctl_flags_cf2_sel;
-wire ctl_sw_4d;
+wire ctl_flags_cf2_sel_shift;
+wire ctl_flags_cf2_sel_daa;
 wire ctl_sw_4u;
 wire ctl_reg_in_hi;
 wire ctl_reg_in_lo;
@@ -99,12 +99,12 @@ wire ctl_reg_not_pc;
 wire ctl_reg_sys_we_lo;
 wire ctl_reg_sys_we_hi;
 wire ctl_reg_sys_we;
+wire ctl_sw_4d;
 wire [1:0] ctl_reg_gp_hilo;
 wire [1:0] ctl_reg_gp_sel;
 wire [1:0] ctl_reg_sys_hilo;
 wire ctl_inc_cy;
 wire ctl_inc_dec;
-wire ctl_inc_zero;
 wire ctl_al_we;
 wire ctl_inc_limit6;
 wire ctl_bus_inc_oe;
@@ -112,15 +112,15 @@ wire ctl_apin_mux;
 wire ctl_apin_mux2;
 wire ctl_bus_ff_oe;
 wire ctl_bus_zero_oe;
-wire ctl_bus_db_oe;
 wire ctl_sw_1u;
 wire ctl_sw_1d;
 wire ctl_sw_2u;
 wire ctl_sw_2d;
 wire ctl_sw_mask543_en;
 wire ctl_bus_db_we;
+wire ctl_bus_db_oe;
 
-// Module: control/execute.sv
+// Module: control/execute.v
 wire nextM;
 wire setM1;
 wire fFetch;
@@ -130,7 +130,6 @@ wire fIORead;
 wire fIOWrite;
 
 // Module: control/interrupts.v
-wire iff1;
 wire iff2;
 wire im1;
 wire im2;
@@ -145,7 +144,7 @@ wire bus_ab_pin_we;
 wire bus_db_pin_oe;
 wire bus_db_pin_re;
 
-// Module: control/pla_decode.sv
+// Module: control/pla_decode.v
 wire [104:0] pla;
 
 // Module: control/resets.v
@@ -167,7 +166,6 @@ wire M2;
 wire M3;
 wire M4;
 wire M5;
-wire M6;
 wire T1;
 wire T2;
 wire T3;
@@ -256,6 +254,8 @@ wire reg_sel_sys_hi;
 wire reg_gp_we;
 wire reg_sys_we_lo;
 wire reg_sys_we_hi;
+wire reg_sw_4d_lo;
+wire reg_sw_4d_hi;
 
 // Module: bus/address_latch.v
 wire address_is_1;
@@ -264,10 +264,7 @@ wire [15:0] address;
 // Module: bus/address_pins.v
 wire [15:0] abus;
 
-// Module: bus/bus_control.v
-wire bus_db_oe;
-
-// Module: bus/bus_switch.sv
+// Module: bus/bus_switch.v
 wire bus_sw_1u;
 wire bus_sw_1d;
 wire bus_sw_2u;

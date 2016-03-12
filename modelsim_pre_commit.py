@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # This script prepares ModelSim *.mpf files for committing to git
 #
@@ -84,7 +84,7 @@ def fixup():
                         g.write("Project_File_P_{0} = {1}".format(i, v))
                         i = i + 1
                     in_file_section = 0
-                g.write(line)
+                g.write(line.strip() + "\n") # Trim whitespaces that ModelSim sometimes adds randomly
         # Lastly, replace old mpf file with the new one
         os.remove(file)
         os.rename(file+".new", file)
@@ -114,10 +114,6 @@ os.chdir("cpu/toplevel/simulation/modelsim")
 fixup()
 os.chdir(dname)
 
-os.chdir("host/basic/simulation/modelsim")
-fixup()
-os.chdir(dname)
-
-os.chdir("host/basic/uart/modelsim")
+os.chdir("host/basic_de1/simulation/modelsim")
 fixup()
 os.chdir(dname)

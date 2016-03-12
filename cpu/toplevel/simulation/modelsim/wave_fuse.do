@@ -58,21 +58,19 @@ add wave -noupdate -group sequencer -expand -group M /test_fuse/dut/sequencer_/M
 add wave -noupdate -group sequencer -expand -group M /test_fuse/dut/sequencer_/M3
 add wave -noupdate -group sequencer -expand -group M /test_fuse/dut/sequencer_/M4
 add wave -noupdate -group sequencer -expand -group M /test_fuse/dut/sequencer_/M5
-add wave -noupdate -group sequencer -expand -group M /test_fuse/dut/sequencer_/M6
 add wave -noupdate -group sequencer -expand -group T /test_fuse/dut/sequencer_/T1
 add wave -noupdate -group sequencer -expand -group T /test_fuse/dut/sequencer_/T2
 add wave -noupdate -group sequencer -expand -group T /test_fuse/dut/sequencer_/T3
 add wave -noupdate -group sequencer -expand -group T /test_fuse/dut/sequencer_/T4
 add wave -noupdate -group sequencer -expand -group T /test_fuse/dut/sequencer_/T5
 add wave -noupdate -group sequencer -expand -group T /test_fuse/dut/sequencer_/T6
-add wave -noupdate -group opcode /test_fuse/dut/instruction_reg_/ctl_ir_we
-add wave -noupdate -group opcode /test_fuse/dut/instruction_reg_/opcode
+add wave -noupdate -group opcode /test_fuse/dut/ir_/ctl_ir_we
+add wave -noupdate -group opcode /test_fuse/dut/ir_/opcode
 add wave -noupdate -group db -radix hexadecimal /test_fuse/dut/db0
 add wave -noupdate -group db -radix hexadecimal /test_fuse/dut/db1
 add wave -noupdate -group db -radix hexadecimal /test_fuse/dut/db2
 add wave -noupdate -group {bus control} /test_fuse/dut/bus_control_/ctl_bus_ff_oe
 add wave -noupdate -group {bus control} /test_fuse/dut/bus_control_/ctl_bus_zero_oe
-add wave -noupdate -group {bus control} /test_fuse/dut/bus_control_/ctl_bus_db_oe
 add wave -noupdate -group {bus control} /test_fuse/dut/pin_control_/bus_ab_pin_we
 add wave -noupdate -group {bus control} /test_fuse/dut/pin_control_/bus_db_pin_oe
 add wave -noupdate -group {bus control} /test_fuse/dut/pin_control_/bus_db_pin_re
@@ -154,6 +152,8 @@ add wave -noupdate -group regfile -group selects -color Gold /test_fuse/dut/reg_
 add wave -noupdate -group regfile -group selects /test_fuse/dut/reg_file_/reg_sel_wz
 add wave -noupdate -group regfile -group selects /test_fuse/dut/reg_file_/reg_sel_ir
 add wave -noupdate -group regfile -group selects /test_fuse/dut/reg_file_/reg_sel_pc
+add wave -noupdate -group regfile -group selects /test_fuse/dut/reg_file_/reg_sw_4d_lo
+add wave -noupdate -group regfile -group selects /test_fuse/dut/reg_file_/reg_sw_4d_hi
 add wave -noupdate -group regfile -radix hexadecimal /test_fuse/dut/reg_file_/db_hi_as
 add wave -noupdate -group regfile -radix hexadecimal -childformat {{{/test_fuse/dut/reg_file_/db_lo_as[7]} -radix hexadecimal} {{/test_fuse/dut/reg_file_/db_lo_as[6]} -radix hexadecimal} {{/test_fuse/dut/reg_file_/db_lo_as[5]} -radix hexadecimal} {{/test_fuse/dut/reg_file_/db_lo_as[4]} -radix hexadecimal} {{/test_fuse/dut/reg_file_/db_lo_as[3]} -radix hexadecimal} {{/test_fuse/dut/reg_file_/db_lo_as[2]} -radix hexadecimal} {{/test_fuse/dut/reg_file_/db_lo_as[1]} -radix hexadecimal} {{/test_fuse/dut/reg_file_/db_lo_as[0]} -radix hexadecimal}} -subitemconfig {{/test_fuse/dut/reg_file_/db_lo_as[7]} {-height 15 -radix hexadecimal} {/test_fuse/dut/reg_file_/db_lo_as[6]} {-height 15 -radix hexadecimal} {/test_fuse/dut/reg_file_/db_lo_as[5]} {-height 15 -radix hexadecimal} {/test_fuse/dut/reg_file_/db_lo_as[4]} {-height 15 -radix hexadecimal} {/test_fuse/dut/reg_file_/db_lo_as[3]} {-height 15 -radix hexadecimal} {/test_fuse/dut/reg_file_/db_lo_as[2]} {-height 15 -radix hexadecimal} {/test_fuse/dut/reg_file_/db_lo_as[1]} {-height 15 -radix hexadecimal} {/test_fuse/dut/reg_file_/db_lo_as[0]} {-height 15 -radix hexadecimal}} /test_fuse/dut/reg_file_/db_lo_as
 add wave -noupdate -group switch /test_fuse/dut/bus_switch_/ctl_sw_mask543_en
@@ -161,12 +161,12 @@ add wave -noupdate -group switch /test_fuse/dut/bus_switch_/ctl_sw_1u
 add wave -noupdate -group switch /test_fuse/dut/bus_switch_/ctl_sw_1d
 add wave -noupdate -group switch /test_fuse/dut/bus_switch_/ctl_sw_2u
 add wave -noupdate -group switch /test_fuse/dut/bus_switch_/ctl_sw_2d
-add wave -noupdate -group switch -color Aquamarine /test_fuse/dut/reg_file_/ctl_sw_4d
+add wave -noupdate -group switch /test_fuse/dut/reg_control_/ctl_sw_4d
 add wave -noupdate -group switch -color Aquamarine /test_fuse/dut/reg_file_/ctl_sw_4u
 add wave -noupdate -group {data pins} /test_fuse/dut/data_pins_/bus_db_pin_oe
 add wave -noupdate -group {data pins} /test_fuse/dut/data_pins_/bus_db_pin_re
 add wave -noupdate -group {data pins} /test_fuse/dut/data_pins_/ctl_bus_db_we
-add wave -noupdate -group {data pins} /test_fuse/dut/data_pins_/bus_db_oe
+add wave -noupdate -group {data pins} /test_fuse/dut/data_pins_/ctl_bus_db_oe
 add wave -noupdate -group {data pins} -radix hexadecimal /test_fuse/dut/data_pins_/D
 add wave -noupdate -group {data pins} -radix hexadecimal /test_fuse/dut/data_pins_/db
 add wave -noupdate -group {alu
@@ -370,7 +370,7 @@ add wave -noupdate -group {alu
 } -radix hexadecimal /test_fuse/dut/alu_/op2_low
 add wave -noupdate -group {address latch} /test_fuse/dut/address_latch_/ctl_inc_cy
 add wave -noupdate -group {address latch} /test_fuse/dut/address_latch_/ctl_inc_dec
-add wave -noupdate -group {address latch} /test_fuse/dut/address_latch_/ctl_inc_zero
+add wave -noupdate -group {address latch} /test_fuse/dut/address_latch_/clrpc
 add wave -noupdate -group {address latch} /test_fuse/dut/address_latch_/ctl_al_we
 add wave -noupdate -group {address latch} /test_fuse/dut/address_latch_/ctl_inc_limit6
 add wave -noupdate -group {address latch} /test_fuse/dut/address_latch_/ctl_bus_inc_oe

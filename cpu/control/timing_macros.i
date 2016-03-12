@@ -1,20 +1,21 @@
 //=========================================================================================
-// This file contains substitute strings for macros used in the Excel timing table and
-// is read and processed by genmatrix.py script to generate exec_matrix.vh include file.
+// This file contains substitute strings for macro expansions. Macros are defined in an
+// Excel timing spreadsheet 'Timings.xlsm' and exported to a .csv file which is then read
+// and processed by genmatrix.py script to generate exec_matrix.vh include file.
 //
-// Format of the file:
+// Macro format:
 //
-// * Each key is prefixed by ':' and corresponds to a spreadsheet column name.
-// * A column (key) contains a number of macros, each starting at its own line.
-// * A macro may span multiple lines, in which case use the '\' character after the name to
-//   continue on the next line.
-// * Multiline macros end when a line does not _start_ with a space character.
+// * Each key is prefixed by ':' and corresponds to a spreadsheet *column* name.
+// * A key may contain several different macros, one per line.
+// * A macro may span multiple lines; use the '\' character to continue on the next line.
+// * Multi-line macros end when a line does not start with a space character.
 // //-style comments are wrapped within /* ... */ if they don't start a line.
 //=========================================================================================
 
 //-----------------------------------------------------------------------------------------
-:Function
+// CPU machine state
 //-----------------------------------------------------------------------------------------
+:Function
 //Fetch is M1
 fMFetch
 fMRead          fMRead=1;
@@ -26,24 +27,24 @@ fIOWrite        fIOWrite=1;
 // Basic timing control
 //-----------------------------------------------------------------------------------------
 :valid
-1               validPLA=1;
+Y               validPLA=1;
 :nextM
-1               nextM=1;
+Y               nextM=1;
 mr              nextM=1; ctl_mRead=1;
 mw              nextM=1; ctl_mWrite=1;
 ior             nextM=1; ctl_iorw=1;
 iow             nextM=1; ctl_iorw=1;
-CC              nextM=!flags_cond_true;
+CC              nextM=~flags_cond_true;
 INT             nextM=1; ctl_mRead=in_intr & im2;   // RST38 interrupt extension
 :setM1
-1               setM1=1;
-SS              setM1=!flags_cond_true;
-CC              setM1=!flags_cond_true;
-ZF              setM1=flags_zf; // Used in DJNZ
-BR              setM1=nonRep | !repeat_en;
-BRZ             setM1=nonRep | !repeat_en | flags_zf;
+Y               setM1=1;
+SS              setM1=~flags_cond_true;
+CC              setM1=~flags_cond_true;
+ZF              setM1=flags_zf;                     // Used in DJNZ
+BR              setM1=nonRep | ~repeat_en;
+BRZ             setM1=nonRep | ~repeat_en | flags_zf;
 BZ              setM1=nonRep | flags_zf;
-INT             setM1=!(in_intr & im2);             // RST38 interrupt extension
+INT             setM1=~(in_intr & im2);             // RST38 interrupt extension
 
 //-----------------------------------------------------------------------------------------
 // Register file, address (downstream) endpoint
@@ -58,16 +59,17 @@ HL      ctl_reg_gp_sel=`GP_REG_HL; ctl_reg_gp_hilo=2'b11; ctl_sw_4d=1;  // Read 
 SP      ctl_reg_use_sp=1; ctl_reg_gp_sel=`GP_REG_AF; ctl_reg_gp_hilo=2'b11; ctl_sw_4d=1;// Read 16-bit SP, enable SW4 downstream
 
 // System registers
-WZ      ctl_reg_sel_wz=1; ctl_reg_sys_hilo=2'b11; ctl_sw_4d=1;      // Select 16-bit WZ
-IR      ctl_reg_sel_ir=1; ctl_reg_sys_hilo=2'b11;                   // Select 16-bit IR
-I*      ctl_reg_sel_ir=1; ctl_reg_sys_hilo=2'b10; ctl_sw_4d=1;      // Select 8-bit I register
-PC      ctl_reg_sel_pc=1; ctl_reg_sys_hilo=2'b11;                   // Select 16-bit PC
+WZ      ctl_reg_sel_wz=1; ctl_reg_sys_hilo=2'b11; ctl_sw_4d=1;          // Select 16-bit WZ
+IR      ctl_reg_sel_ir=1; ctl_reg_sys_hilo=2'b11;                       // Select 16-bit IR
+I*      ctl_reg_sel_ir=1; ctl_reg_sys_hilo=2'b10; ctl_sw_4d=1;          // Select 8-bit I register
+PC      ctl_reg_sel_pc=1; ctl_reg_sys_hilo=2'b11;                       // Select 16-bit PC
 
 // Conditional assertions of WZ, HL instead of PC
-WZ? \
-    if (flags_cond_true) begin      // If cc is true, use WZ instead of PC (for jumps)
-        ctl_reg_not_pc=1; ctl_reg_sel_wz=1; ctl_reg_sys_hilo=2'b11; ctl_sw_4d=1;
-    end
+WZ?     ctl_reg_not_pc|=flags_cond_true; ctl_reg_sel_wz|=flags_cond_true; ctl_reg_sys_hilo|={flags_cond_true,flags_cond_true}; ctl_sw_4d|=flags_cond_true;
+// Alternate format:
+//    if (flags_cond_true) begin // If cc is true, use WZ instead of PC (for jumps)
+//        ctl_reg_not_pc=1; ctl_reg_sel_wz=1; ctl_reg_sys_hilo=2'b11; ctl_sw_4d=1;
+//    end
 
 :A:reg wr
 // General purpose registers
@@ -80,16 +82,16 @@ SP      ctl_reg_gp_we=1; ctl_reg_gp_sel=`GP_REG_AF; ctl_reg_gp_hilo=2'b11; ctl_r
 WZ      ctl_reg_sys_we=1; ctl_reg_sel_wz=1; ctl_reg_sys_hilo=2'b11; ctl_sw_4u=1; // Write 16-bit WZ, enable SW4 upstream
 IR      ctl_reg_sys_we=1; ctl_reg_sel_ir=1; ctl_reg_sys_hilo=2'b11; // Write 16-bit IR
 // PC will not be incremented if we are in HALT, INTR or NMI state
-PC      ctl_reg_sys_we=1; ctl_reg_sel_pc=1; ctl_reg_sys_hilo=2'b11; pc_inc=!(in_halt | in_intr | in_nmi); // Write 16-bit PC and control incrementer
+PC      ctl_reg_sys_we=1; ctl_reg_sel_pc=1; ctl_reg_sys_hilo=2'b11; pc_inc_hold=(in_halt | in_intr | in_nmi); // Write 16-bit PC and control incrementer
 >       ctl_sw_4u=1;
 
 //-----------------------------------------------------------------------------------------
 // Controls the address latch incrementer, the address latch and the address pin mux
 //-----------------------------------------------------------------------------------------
 :inc/dec
-+       ctl_inc_cy=pc_inc;                      // Increment
--       ctl_inc_cy=pc_inc; ctl_inc_dec=1;       // Decrement
-op3     ctl_inc_cy=pc_inc; ctl_inc_dec=op3;     // Decrement if op3 is set; increment otherwise
++       ctl_inc_cy=~pc_inc_hold;                      // Increment
+-       ctl_inc_cy=~pc_inc_hold; ctl_inc_dec=1;       // Decrement
+op3     ctl_inc_cy=~pc_inc_hold; ctl_inc_dec=op3;     // Decrement if op3 is set; increment otherwise
 
 :A:latch
 W       ctl_al_we=1;                            // Write a value from the register bus to the address latch
@@ -107,16 +109,16 @@ AF      ctl_reg_gp_sel=`GP_REG_AF; ctl_reg_gp_hilo=2'b11;
 B       ctl_reg_gp_sel=`GP_REG_BC; ctl_reg_gp_hilo=2'b10;
 H       ctl_reg_gp_sel=`GP_REG_HL; ctl_reg_gp_hilo=2'b10;
 L       ctl_reg_gp_sel=`GP_REG_HL; ctl_reg_gp_hilo=2'b01;
-r8 \    // r8 addressing does not allow reading F register (A and F are also indexed as swapped) (ex. in OUT (c),r)
-    if (op4 & op5 & !op3) ctl_bus_zero_oe=1;                // Trying to read flags? Put 0 on the bus instead.
-    else begin ctl_reg_gp_sel=op54; ctl_reg_gp_hilo={!rsel3,rsel3}; end // Read 8-bit GP register
-r8'     ctl_reg_gp_sel=op21; ctl_reg_gp_hilo={!rsel0,rsel0};// Read 8-bit GP register selected by op[2:0]
+r8      ctl_reg_gp_sel=op21; ctl_reg_gp_hilo={~rsel0,rsel0};// Read 8-bit GP register selected by op[2:0]
+r8' \   // r8 addressing does not allow reading F register (indices of A and F are also swapped) (ex. in OUT (c),r)
+        if (op4 & op5 & ~op3) begin ctl_bus_zero_oe=1; end  // Trying to read flags? Put 0 on the bus instead.
+        if (~(op4 & op5 & ~op3)) begin ctl_reg_gp_sel=op54; ctl_reg_gp_hilo={~rsel3,rsel3}; end // Read 8-bit GP register
 rh      ctl_reg_gp_sel=op54; ctl_reg_gp_hilo=2'b10;         // Read 8-bit GP register high byte
 rl      ctl_reg_gp_sel=op54; ctl_reg_gp_hilo=2'b01;         // Read 8-bit GP register low byte
 //----- System registers -----
 WZ      ctl_reg_sel_wz=1; ctl_reg_sys_hilo=2'b11; ctl_sw_4u=1;
 Z       ctl_reg_sel_wz=1; ctl_reg_sys_hilo=2'b01; ctl_sw_4u=1; // Selecting strictly Z
-I/R     ctl_reg_sel_ir=1; ctl_reg_sys_hilo={!op3,op3}; ctl_sw_4u=1; // Read either I or R based on op3 (0 or 1)
+I/R     ctl_reg_sel_ir=1; ctl_reg_sys_hilo={~op3,op3}; ctl_sw_4u=1; // Read either I or R based on op3 (0 or 1)
 PCh     ctl_reg_sel_pc=1; ctl_reg_sys_hilo=2'b10; ctl_sw_4u=1;
 PCl     ctl_reg_sel_pc=1; ctl_reg_sys_hilo=2'b01; ctl_sw_4u=1;
 
@@ -126,16 +128,16 @@ PCl     ctl_reg_sel_pc=1; ctl_reg_sys_hilo=2'b01; ctl_sw_4u=1;
 A       ctl_reg_gp_we=1; ctl_reg_gp_sel=`GP_REG_AF; ctl_reg_gp_hilo=2'b10;
 F       ctl_reg_gp_we=1; ctl_reg_gp_sel=`GP_REG_AF; ctl_reg_gp_hilo=2'b01;
 B       ctl_reg_gp_we=1; ctl_reg_gp_sel=`GP_REG_BC; ctl_reg_gp_hilo=2'b10;
-r8      ctl_reg_gp_we=1; ctl_reg_gp_sel=op54; ctl_reg_gp_hilo={!rsel3,rsel3}; // Write 8-bit GP register
-r8'     ctl_reg_gp_we=1; ctl_reg_gp_sel=op21; ctl_reg_gp_hilo={!rsel0,rsel0}; // Write 8-bit GP register selected by op[2:0]
+r8      ctl_reg_gp_we=1; ctl_reg_gp_sel=op54; ctl_reg_gp_hilo={~rsel3,rsel3}; // Write 8-bit GP register
+r8'     ctl_reg_gp_we=1; ctl_reg_gp_sel=op21; ctl_reg_gp_hilo={~rsel0,rsel0}; // Write 8-bit GP register selected by op[2:0]
 rh      ctl_reg_gp_we=1; ctl_reg_gp_sel=op54; ctl_reg_gp_hilo=2'b10; // Write 8-bit GP register high byte
 rl      ctl_reg_gp_we=1; ctl_reg_gp_sel=op54; ctl_reg_gp_hilo=2'b01; // Write 8-bit GP register low byte
 //----- System registers -----
-I/R     ctl_reg_sys_we=1; ctl_reg_sel_ir=1; ctl_reg_sys_hilo={!op3,op3}; ctl_sw_4d=1; // Write either I or R based on op3 (0 or 1)
+I/R     ctl_reg_sys_we=1; ctl_reg_sel_ir=1; ctl_reg_sys_hilo={~op3,op3}; ctl_sw_4d=1; // Write either I or R based on op3 (0 or 1)
 WZ      ctl_reg_sys_we=1; ctl_reg_sel_wz=1; ctl_reg_sys_hilo=2'b11;
-W       ctl_reg_sys_we_hi=1; ctl_reg_sel_wz=1; ctl_reg_sys_hilo[1]=1; // Selecting only W
-W?      ctl_reg_sys_we_hi=flags_cond_true; ctl_reg_sel_wz=flags_cond_true; ctl_reg_sys_hilo[1]=1; // Conditionally selecting only W
-Z       ctl_reg_sys_we_lo=1; ctl_reg_sel_wz=1; ctl_reg_sys_hilo[0]=1; // Selecting only Z
+W       ctl_reg_sys_we_hi=1; ctl_reg_sel_wz=1; ctl_reg_sys_hilo={1'b1,ctl_reg_sys_hilo[0]}; // Selecting only W
+W?      ctl_reg_sys_we_hi=flags_cond_true; ctl_reg_sel_wz=flags_cond_true; ctl_reg_sys_hilo={1'b1,ctl_reg_sys_hilo[0]}; // Conditionally selecting only W
+Z       ctl_reg_sys_we_lo=1; ctl_reg_sel_wz=1; ctl_reg_sys_hilo={ctl_reg_sys_hilo[1],1'b1}; // Selecting only Z
 
 //-----------------------------------------------------------------------------------------
 // Controls the register file gate connecting it with the ALU and data bus
@@ -144,9 +146,15 @@ Z       ctl_reg_sys_we_lo=1; ctl_reg_sel_wz=1; ctl_reg_sys_hilo[0]=1; // Selecti
 <       ctl_reg_in_hi=1; ctl_reg_in_lo=1;       // From the ALU side into the register file
 <l      ctl_reg_in_lo=1;                        // From the ALU side into the register file low byte only
 <h      ctl_reg_in_hi=1;                        // From the ALU side into the register file high byte only
->       ctl_reg_out_hi=1; ctl_reg_out_lo=1;     // From the register file into the ALU
->l      ctl_reg_out_lo=1;                       // From the register file into the ALU low byte only
->h      ctl_reg_out_hi=1;                       // From the register file into the ALU high byte only
+
+>       ctl_reg_out_hi=1; ctl_reg_out_lo=1;     // From the register file into the FLAGT and ALU
+
+// Enables a register gate (high/low) corresponding to the selected 8-bit register
+>r8     ctl_reg_out_hi=~rsel0; ctl_reg_out_lo=rsel0; ctl_sw_2u=~rsel0; ctl_sw_2d=rsel0; // Enable register gate based on the rsel0
+>r8'    ctl_reg_out_hi=~rsel3; ctl_reg_out_lo=rsel3; ctl_sw_2u=~rsel3; ctl_sw_2d=rsel3; // Enable register gate based on the rsel3
+
+>l      ctl_reg_out_lo=1;                       // From the register file onto the db1 (sw2 + FLAGT + sw1)
+>h      ctl_reg_out_hi=1;                       // From the register file onto the db2 (sw2 + ALU)
 
 //-----------------------------------------------------------------------------------------
 // Switches on the data bus for each direction (upstream, downstream)
@@ -154,6 +162,7 @@ Z       ctl_reg_sys_we_lo=1; ctl_reg_sel_wz=1; ctl_reg_sys_hilo[0]=1; // Selecti
 :SW2
 d       ctl_sw_2d=1;
 u       ctl_sw_2u=1;
+-       // Controlled by register gate
 
 :SW1
 <       ctl_sw_1d=1;
@@ -175,7 +184,7 @@ FF      ctl_bus_ff_oe=1;                        // Force 0xFF on the data bus
 // Controls the master ALU output enable and the ALU input, only one can be active at a time
 // >bs if set, will override >s0 which is used by bit instructions to override default M1/T3 load
 <       ctl_alu_oe=1;                           // Enable ALU onto the data bus
->s0     ctl_alu_shift_oe=!ctl_alu_bs_oe;        // Shifter unit without shift-enable
+>s0     ctl_alu_shift_oe=~ctl_alu_bs_oe;        // Shifter unit without shift-enable
 >s1     ctl_alu_shift_oe=1; ctl_shift_en=1;     // Shifter unit AND shift enable!
 >bs     ctl_alu_bs_oe=1;                        // Bit-selector unit
 
@@ -198,65 +207,62 @@ low     ctl_alu_op1_sel_low=1;                  // Write low nibble with a high 
 0       ctl_alu_op1_sel_zero=1;                 // Zero
 
 :operation
-// Sets the ALU core operation
-//--------------------------------------------------------------------------------------------------------------------------
-CP \
-    ctl_alu_core_R=0; ctl_alu_core_V=0; ctl_alu_core_S=0;                                             ctl_alu_sel_op2_neg=1;
-    if (ctl_alu_op_low) begin
-                                                              ctl_flags_cf_set=1;
-    end else begin
-        ctl_alu_core_hf=1;
-    end
-//--------------------------------------------------------------------------------------------------------------------------
-SUB \
-
-    ctl_alu_core_R=0; ctl_alu_core_V=0; ctl_alu_core_S=0;                                             ctl_alu_sel_op2_neg=1;
-    if (ctl_alu_op_low) begin
-                                                              ctl_flags_cf_set=1;
-    end else begin
-        ctl_alu_core_hf=1;
-    end
-//--------------------------------------------------------------------------------------------------------------------------
-SBC \
-    ctl_alu_core_R=0; ctl_alu_core_V=0; ctl_alu_core_S=0;                                             ctl_alu_sel_op2_neg=1;
-    if (ctl_alu_op_low) begin
-                                                                                  ctl_flags_cf_cpl=1;
-    end else begin
-        ctl_alu_core_hf=1;
-    end
-//--------------------------------------------------------------------------------------------------------------------------
-SBCh \
-    ctl_alu_core_R=0; ctl_alu_core_V=0; ctl_alu_core_S=0;                                             ctl_alu_sel_op2_neg=1;
-    if (!ctl_alu_op_low) begin
-        ctl_alu_core_hf=1;
-    end
-//--------------------------------------------------------------------------------------------------------------------------
-ADC \
-    ctl_alu_core_R=0; ctl_alu_core_V=0; ctl_alu_core_S=0;
-    if (!ctl_alu_op_low) begin
-        ctl_alu_core_hf=1;
-    end
-//--------------------------------------------------------------------------------------------------------------------------
-ADD \
-    ctl_alu_core_R=0; ctl_alu_core_V=0; ctl_alu_core_S=0;
-    if (ctl_alu_op_low) begin
-                                                              ctl_flags_cf_set=1; ctl_flags_cf_cpl=1;
-    end else begin
-        ctl_alu_core_hf=1;
-    end
-//--------------------------------------------------------------------------------------------------------------------------
-AND     ctl_alu_core_R=0; ctl_alu_core_V=0; ctl_alu_core_S=1; ctl_flags_cf_set=1;
+// Defines the ALU core compute operation
+// The listing is also showing their alternate formats (using if/then)
+//-----------------------------------------------------------------------------------------
+CP      ctl_alu_sel_op2_neg=1; ctl_flags_cf_set|=ctl_alu_op_low; ctl_alu_core_hf|=~ctl_alu_op_low;
+//    ctl_alu_sel_op2_neg=1;
+//    if (ctl_alu_op_low) begin
+//        ctl_flags_cf_set=1;
+//    end else begin
+//        ctl_alu_core_hf=1;
+//    end
+//-----------------------------------------------------------------------------------------
+SUB     ctl_alu_sel_op2_neg=1; ctl_flags_cf_set|=ctl_alu_op_low; ctl_alu_core_hf|=~ctl_alu_op_low;
+//    ctl_alu_sel_op2_neg=1;
+//    if (ctl_alu_op_low) begin
+//        ctl_flags_cf_set=1;
+//    end else begin
+//        ctl_alu_core_hf=1;
+//    end
+//-----------------------------------------------------------------------------------------
+SBC     ctl_alu_sel_op2_neg=1; ctl_flags_cf_cpl|=ctl_alu_op_low; ctl_alu_core_hf|=~ctl_alu_op_low;
+//    ctl_alu_sel_op2_neg=1;
+//    if (ctl_alu_op_low) begin
+//        ctl_flags_cf_cpl=1;
+//    end else begin
+//        ctl_alu_core_hf=1;
+//    end
+//-----------------------------------------------------------------------------------------
+SBCh    ctl_alu_sel_op2_neg=1; ctl_alu_core_hf|=~ctl_alu_op_low;
+//    ctl_alu_sel_op2_neg=1;
+//    if (~ctl_alu_op_low) begin
+//        ctl_alu_core_hf=1;
+//    end
+//-----------------------------------------------------------------------------------------
+ADC     ctl_alu_core_hf|=~ctl_alu_op_low;
+//    if (~ctl_alu_op_low) begin
+//        ctl_alu_core_hf=1;
+//    end
+//-----------------------------------------------------------------------------------------
+ADD     ctl_flags_cf_set|=ctl_alu_op_low; ctl_flags_cf_cpl|=ctl_alu_op_low; ctl_alu_core_hf|=~ctl_alu_op_low;
+//    if (ctl_alu_op_low) begin
+//        ctl_flags_cf_set=1; ctl_flags_cf_cpl=1;
+//    end else begin
+//        ctl_alu_core_hf=1;
+//    end
+//-----------------------------------------------------------------------------------------
+AND     ctl_alu_core_S=1; ctl_flags_cf_set=1;
 OR      ctl_alu_core_R=1; ctl_alu_core_V=1; ctl_alu_core_S=1; ctl_flags_cf_set=1; ctl_flags_cf_cpl=1;
-XOR     ctl_alu_core_R=1; ctl_alu_core_V=0; ctl_alu_core_S=0; ctl_flags_cf_set=1; ctl_flags_cf_cpl=1;
-
-NAND    ctl_alu_core_R=0; ctl_alu_core_V=0; ctl_alu_core_S=1; ctl_flags_cf_set=1;                     ctl_alu_sel_op2_neg=1;
+XOR     ctl_alu_core_R=1; ctl_flags_cf_set=1; ctl_flags_cf_cpl=1;
+NAND    ctl_alu_core_S=1; ctl_flags_cf_set=1; ctl_alu_sel_op2_neg=1;
 NOR     ctl_alu_core_R=1; ctl_alu_core_V=1; ctl_alu_core_S=1; ctl_flags_cf_set=1; ctl_flags_cf_cpl=1; ctl_alu_sel_op2_neg=1;
-//--------------------------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------
 
 PLA     ctl_state_alu=1;                        // Assert the ALU PLA modifier to determine operation
 
 :nibble
-// ALU computational phase: low nibble or high nibble
+// ALU compute phase: working on low nibble or high nibble
 L       ctl_alu_op_low=1;                       // Activate ALU operation on low nibble
 H       ctl_alu_sel_op2_high=1;                 // Activate ALU operation on high nibble
 
@@ -297,14 +303,13 @@ S       ctl_flags_nf_we=1;                      // Sign bit, to be used with FLA
 ^       ctl_flags_cf_we=1;  ctl_flags_cf_cpl=1; // CCF
 :CF2
 R       ctl_flags_use_cf2=1;
-W       ctl_flags_cf2_we=1; ctl_flags_cf2_sel=0;
-W.sh    ctl_flags_cf2_we=1; ctl_flags_cf2_sel=1;
-W.daa   ctl_flags_cf2_we=1; ctl_flags_cf2_sel=2;
-W.0     ctl_flags_cf2_we=1; ctl_flags_cf2_sel=3;
+W       ctl_flags_cf2_we=1;
+W.sh    ctl_flags_cf2_we=1; ctl_flags_cf2_sel_shift=1;
+W.daa   ctl_flags_cf2_we=1; ctl_flags_cf2_sel_daa=1;
 
-//-----------------------------------------------------------------------------------------
-// Special sequence macros for some instructions make it simpler for all other entries
-//-----------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------
+// Macros for some special cases; also simplifies control logic for a number of instructions
+//------------------------------------------------------------------------------------------
 :Special
 USE_SP          ctl_reg_use_sp=1;                           // For 16-bit loads: use SP instead of AF
 
@@ -318,38 +323,39 @@ IM              ctl_im_we=1;                                // IM n ('n' is read
 
 WZ=IX+d         ixy_d=1;                                    // Compute WZ=IX+d
 IX_IY           ctl_state_ixiy_we=1; ctl_state_iy_set=op5; setIXIY=1;   // IX/IY prefix
-CLR_IX_IY       ctl_state_ixiy_we=1; ctl_state_ixiy_clr=!setIXIY;       // Clear IX/IY flag
+CLR_IX_IY       ctl_state_ixiy_we=1; ctl_state_ixiy_clr=~setIXIY;       // Clear IX/IY flag
 
 CB              ctl_state_tbl_cb_set=1; setCBED=1;          // CB-table prefix
 ED              ctl_state_tbl_ed_set=1; setCBED=1;          // ED-table prefix
-CLR_CB_ED       ctl_state_tbl_clr=!setCBED;                 // Clear CB/ED prefix
+CLR_CB_ED       ctl_state_tbl_clr=~setCBED;                 // Clear CB/ED prefix
 
 // If the NF is set, complement HF and CF on the way out to the bus
 // This is used to correctly set those flags after subtraction operations
 ?NF_HF_CF       ctl_flags_hf_cpl=flags_nf; ctl_flags_cf_cpl=flags_nf;
 ?NF_HF          ctl_flags_hf_cpl=flags_nf;
-?~CF_HF         ctl_flags_hf_cpl=!flags_cf;  // Used for CCF
+?~CF_HF         ctl_flags_hf_cpl=~flags_cf;  // Used for CCF
 ?SF_NEG         ctl_alu_sel_op2_neg=flags_sf;
 NEG_OP2         ctl_alu_sel_op2_neg=1;
-?NF_SUB         ctl_alu_sel_op2_neg=flags_nf; ctl_flags_cf_cpl=!flags_nf;
+?NF_SUB         ctl_alu_sel_op2_neg=flags_nf; ctl_flags_cf_cpl=~flags_nf;
 
 // M1 opcode read cycle and the refresh register increment cycle
 // Write opcode into the instruction register through internal db0 bus:
 OpcodeToIR      ctl_ir_we=1;
+
 // At the common instruction load M1/T3, override opcode byte when servicing interrupts:
 // 1. We are in HALT mode: push NOP (0x00) instead
 // 2. We are in INTR mode (IM1 or IM2): push RST38 (0xFF) instead
 // 3. We are in NMI mode: push RST38 (0xFF) instead
 OverrideIR      ctl_bus_zero_oe=in_halt; ctl_bus_ff_oe=(in_intr & (im1 | im2)) | in_nmi;
 
-// RST instruction uses opcode[5:3] to specify a vector and this control passes those 3 bits through
-MASK_543        ctl_sw_mask543_en=!((in_intr & im2) | in_nmi);
-// Based on the in_nmi state, several things are set:
+// RST instruction uses opcode[5:3] to specify a vector and this macro passes those 3 bits through
+MASK_543        ctl_sw_mask543_en=~((in_intr & im2) | in_nmi);
+// Based on the in_nmi state:
 // 1. Disable SW1 so the opcode will not get onto db1 bus
 // 2. Generate 0x66 on the db1 bus which will be used as the target vector address
 // 3. Clear IFF1 (done by the nmi logic on posedge of in_nmi)
-RST_NMI         ctl_sw_1d=!in_nmi; ctl_66_oe=in_nmi;
-// Based on the in_intr state, several things are set:
+RST_NMI         ctl_sw_1d=~in_nmi; ctl_66_oe=in_nmi;
+// Based on the in_intr state:
 // 1. IM1 mode, force 0xFF on the db0 bus
 // 2. Clear IFF1 and IFF2 (done by the intr logic on posedge of in_intr)
 RST_INT         ctl_bus_ff_oe=in_intr & im1;

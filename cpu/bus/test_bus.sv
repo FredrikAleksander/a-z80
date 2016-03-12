@@ -9,7 +9,8 @@ module test_bus;
 // Define one full T-clock cycle delay
 `define T #2
 bit clk = 1;
-initial repeat (24) #1 clk = ~clk;
+initial repeat (26) #1 clk = ~clk;
+reg nreset;
 
 // ----------------------------------------------------
 // Bi-directional bus that can also be tri-stated
@@ -27,7 +28,7 @@ reg ctl_apin_mux2;          // Selects mux2
 reg ctl_inc_dec;            // Perform decrement (1) or increment (0)
 reg ctl_inc_limit6;         // Limit increment to 6 bits (for incrementing IR)
 reg ctl_inc_cy;             // Address increment, carry in value (+/-1 or 0)
-reg ctl_inc_zero;           // Output zero from the incrementer
+reg clrpc;                  // Force zero (to clear PC/IR)
 
 // ----------------- OUTPUT/STATUS -----------------
 wire address_is_1;          // Signals when the final address is 1
@@ -37,15 +38,19 @@ wire address_is_1;          // Signals when the final address is 1
    assert(address==arg);
 
 initial begin
+    nreset = 0;
     abusw = 'z;
     ctl_al_we = 0;
     ctl_bus_inc_oe = 0;
     ctl_inc_dec = 0;
     ctl_inc_limit6 = 0;
     ctl_inc_cy = 0;
-    ctl_inc_zero = 0;
+    clrpc = 0;
     ctl_apin_mux = 0;
     ctl_apin_mux2 = 0;
+
+    //------------------------------------------------------------
+    `T  nreset = 1;
 
     //------------------------------------------------------------
     // Perform a simple increment and decrement

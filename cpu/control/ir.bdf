@@ -68,8 +68,24 @@ applicable agreement for further details.
 	(text "VCC" (rect 136 7 156 17)(font "Arial" (font_size 6)))
 )
 (pin
+	(input)
+	(rect 40 120 216 136)
+	(text "INPUT" (rect 133 0 161 10)(font "Arial" (font_size 6)))
+	(text "nreset" (rect 9 0 39 12)(font "Arial" ))
+	(pt 176 8)
+	(drawing
+		(line (pt 92 12)(pt 117 12))
+		(line (pt 92 4)(pt 117 4))
+		(line (pt 121 8)(pt 176 8))
+		(line (pt 92 12)(pt 92 4))
+		(line (pt 117 4)(pt 121 8))
+		(line (pt 117 12)(pt 121 8))
+	)
+	(text "VCC" (rect 136 7 156 17)(font "Arial" (font_size 6)))
+)
+(pin
 	(output)
-	(rect 376 48 552 64)
+	(rect 504 48 680 64)
 	(text "OUTPUT" (rect 1 0 39 10)(font "Arial" (font_size 6)))
 	(text "opcode[7..0]" (rect 90 0 151 12)(font "Arial" ))
 	(pt 0 8)
@@ -84,7 +100,7 @@ applicable agreement for further details.
 	)
 )
 (symbol
-	(rect 264 32 328 112)
+	(rect 392 32 456 112)
 	(text "DFFE" (rect 1 0 25 10)(font "Arial" (font_size 6)))
 	(text "ir" (rect 3 68 8 80)(font "Arial" ))
 	(port
@@ -126,7 +142,7 @@ applicable agreement for further details.
 		(pt 64 24)
 		(output)
 		(text "Q" (rect 44 20 49 32)(font "Courier New" (bold)))
-		(text "Q" (rect 44 20 48 32)(font "Courier New" (bold)))
+		(text "Q" (rect 44 20 49 32)(font "Courier New" (bold)))
 		(line (pt 53 24)(pt 64 24))
 	)
 	(drawing
@@ -142,31 +158,39 @@ applicable agreement for further details.
 )
 (connector
 	(pt 216 56)
-	(pt 264 56)
-	(bus)
-)
-(connector
-	(pt 216 88)
-	(pt 264 88)
-)
-(connector
-	(pt 328 56)
-	(pt 376 56)
+	(pt 392 56)
 	(bus)
 )
 (connector
 	(pt 216 72)
-	(pt 264 72)
+	(pt 392 72)
 )
-(text "8 latches implement the opcode Instruction Register" (rect 160 136 451 150)(font "Arial" (font_size 8)))
+(connector
+	(pt 456 56)
+	(pt 504 56)
+	(bus)
+)
+(connector
+	(pt 216 88)
+	(pt 392 88)
+)
+(connector
+	(pt 216 128)
+	(pt 424 128)
+)
+(connector
+	(pt 424 128)
+	(pt 424 112)
+)
+(text "8 latches implement the opcode Instruction Register" (rect 352 160 643 174)(font "Arial" (font_size 8)))
 (title_block
-	(rect 40 176 297 228)
+	(rect 40 160 297 212)
 	(name "title-custom-small")
-	(section (rect 0 0 256 17)(text "PROJECT" (rect 2 0 52 12)(font "Arial" ))(text "A-Z80" (rect 56 2 94 17)(font "Arial" (font_size 9)(bold)))(border))
-	(section (rect 104 0 256 17)(text "MODULE" (rect 2 1 48 13)(font "Arial" ))(text "ir" (rect 43 2 52 17)(font "Arial" (font_size 9)(bold)))(border))
+	(section (rect 0 35 256 51)(text "DATE" (rect 2 0 30 12)(font "Arial" ))(text "May 3, 2014, 2016" (rect 56 3 161 17)(font "Arial" (font_size 8)))(border))
 	(section (rect 0 18 256 34)(text "DESIGNER" (rect 2 0 59 12)(font "Arial" ))(text "Goran Devic" (rect 56 2 135 17)(font "Arial" (font_size 9)))(border))
-	(section (rect 0 35 256 51)(text "DATE" (rect 2 0 30 12)(font "Arial" ))(text "May 3, 2014" (rect 56 3 125 17)(font "Arial" (font_size 8)))(border))
-	(section (rect 192 35 256 51)(text "REV" (rect 2 1 25 13)(font "Arial" ))(text "1.1" (rect 43 3 60 17)(font "Arial" (font_size 8)))(border))
+	(section (rect 104 0 256 17)(text "MODULE" (rect 2 1 48 13)(font "Arial" ))(text "ir" (rect 43 2 52 17)(font "Arial" (font_size 9)(bold)))(border))
+	(section (rect 0 0 256 17)(text "PROJECT" (rect 2 0 52 12)(font "Arial" ))(text "A-Z80" (rect 56 2 94 17)(font "Arial" (font_size 9)(bold)))(border))
+	(section (rect 192 35 256 51)(text "REV" (rect 2 1 25 13)(font "Arial" ))(text "1.3" (rect 43 3 60 17)(font "Arial" (font_size 8)))(border))
 	(drawing
 	)
 )

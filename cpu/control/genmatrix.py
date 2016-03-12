@@ -1,14 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # This script reads A-Z80 instruction timing data from a spreadsheet text file
+# 'Timings.csv' (which is a TAB-delimited text file exported from 'Timings.xlsm')
 # and generates a Verilog include file defining the control block execution matrix.
 # Token keywords in the timing spreadsheet are substituted using a list of keys
-# stored in the macros file. See the macro file for the format information.
-#
-# Input timing file is exported from the Excel file as a TAB-delimited text file.
+# defined in 'timing_macros.i'.
 #
 #-------------------------------------------------------------------------------
-#  Copyright (C) 2014  Goran Devic
+#  Copyright (C) 2014,2016  Goran Devic
 #
 #  This program is free software; you can redistribute it and/or modify it
 #  under the terms of the GNU General Public License as published by the Free
@@ -25,7 +24,7 @@ import sys
 import csv
 import os
 
-# Input file exported from a timing spreadsheet:
+# Input file (exported from 'Timings.xlsm'):
 fname = "Timings.csv"
 
 # Input file containing macro substitution keys
@@ -33,6 +32,9 @@ kname = "timing_macros.i"
 
 # Set this to 1 if you want abbreviated matrix (no-action lines removed)
 abbr = 1
+
+# Set this to 0 if you want to strip all comments from the resulting file
+comment = 1
 
 # Set this to 1 if you want debug $display() printout on each PLA line
 debug = 0
@@ -48,8 +50,12 @@ with open(kname, 'r') as f:
         if len(line.strip())>0 and line[0]!='/':
             # Wrap up non-starting //-style comments into /* ... */ so the
             # line can be concatenated while preserving comments
-            if line.find("//")>0:
-                macros.append( line.rstrip().replace("//", "/*", 1) + " */" )
+            i = line.find("//")
+            if i>0:
+                if comment==1:
+                    macros.append( line.rstrip().replace("//", "/*", 1) + " */" )
+                else:
+                    macros.append( line.rstrip()[0:i] )
             else:
                 macros.append(line.rstrip())
 
@@ -70,11 +76,11 @@ def getSubst(key, token):
         if multiline==True:
             # Multiline copies lines until a char at [0] is not a space
             if len(l.strip())==0 or l[0]!=' ':
-                return '\n' + "\n".join(subst)
+                return '\n' + "\n".join(subst).rstrip()
             else:
-                subst.append(l)
+                subst.append(l.rstrip())
         lx = l.split(' ')               # Split the string and then ignore (duplicate)
-        lx = filter(None, lx)           # spaces in the list left by the split()
+        lx = list(filter(None, lx))     # spaces in the list left by the split()
         if l.startswith(":"):           # Find and recognize a matching set (key) section
             if validset:                # Error if there is a new section going from the macthing one
                 break                   # meaning we did not find our macro in there
@@ -96,7 +102,7 @@ def getSubst(key, token):
 
 # Read the content of a file and using the csv reader and remove any quotes from the input fields
 content = []                            # Content of the spreadsheet timing file
-with open(fname, 'rb') as csvFile:
+with open(fname, 'r') as csvFile:
     reader = csv.reader(csvFile, delimiter='\t', quotechar='"')
     for row in reader:
         content.append('\t'.join(row))
@@ -113,12 +119,12 @@ for col in range(len(tokens)):
 imatrix = []    # Verilog execution matrix code
 for line in content:
     col = line.split('\t')              # Split the string into a list of columns
-    col_clean = filter(None, col)       # Removed all empty fields (between the separators)
+    col_clean = list(filter(None, col)) # Removed all empty fields (between the separators)
     if len(col_clean)==0:               # Ignore completely empty lines
         continue
 
-    if col_clean[0].startswith('//'):   # Print comment lines
-        imatrix.append(col_clean[0])
+    if col_clean[0].startswith('//') and comment==1:
+        imatrix.append(col_clean[0])    # Optionally print comment lines
 
     if col_clean[0].startswith("#end"): # Print the end of a condition
         imatrix.append("end\n")
@@ -138,18 +144,18 @@ for line in content:
         # M and T states are hard-coded in the table at the index 1 and 2
         if col_clean[0].startswith('#0'):
             if col[1]=='?':     # M is optional, use '?' to skip it
-                state = "    if (T{0}) begin ".format(col[2])
+                state = "    if (T{0}) begin".format(col[2])
             else:
-                state = "    if (M{0} && T{1}) begin ".format(col[1], col[2])
+                state = "    if (M{0} & T{1}) begin".format(col[1], col[2])
         else:
-            state = "    begin "
+            state = "    begin"
 
         # Loop over all other columns and perform verbatim substitution
         action = ""
         for i in range(3,len(col)):
             # There may be multiple tokens separated by commas
             tokList = col[i].strip().split(',')
-            tokList =  filter(None, tokList)   # Filter out empty lines
+            tokList = list(filter(None, tokList)) # Filter out empty lines
             for token in tokList:
                 token = token.strip()
                 if i in tkeys and len(token)>0:
@@ -158,7 +164,7 @@ for line in content:
                         action += ctl_prefix
                     action += macro
                     if state.find("ERROR")>=0:
-                        print "{0} {1}".format(state, action)
+                        print ("{0} {1}".format(state, action))
                         break
 
         # Complete and write out a line
@@ -168,15 +174,16 @@ for line in content:
 
 # Create a file containing the logic matrix code
 with open('exec_matrix.vh', 'w') as file:
-    file.write("// Automatically generated by genmatrix.py\n")
+    if comment==1:
+        file.write("// Automatically generated by genmatrix.py\n\n")
     # If there were errors, print them first (and output to the console)
     if len(errors)>0:
         for error in errors:
-            print error
+            print (error)
             file.write(error + "\n")
         file.write("-" * 80 + "\n")
     for item in imatrix:
         file.write("{}\n".format(item))
 
 # Touch a file that includes 'exec_matrix.vh' to ensure it will recompile correctly
-os.utime("execute.sv", None)
+os.utime("execute.v", None)
