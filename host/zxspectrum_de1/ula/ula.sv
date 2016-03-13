@@ -1,5 +1,5 @@
 //============================================================================
-// The implementation of the Sinclair ZX Spectrum ULA
+// Sinclair ZX Spectrum ULA
 //
 //  Copyright (C) 2014-2016  Goran Devic
 //
@@ -24,7 +24,7 @@ module ula
     input wire CLOCK_24,            // Input clock 24 MHz
     input wire turbo,               // Turbo speed (3.5 MHz x 2 = 7.0 MHz)
     output wire clk_vram,
-    input wire reset,               // KEY0 is reset
+    input wire nreset,              // Active low reset
     output wire locked,             // PLL is locked signal
 
     //-------- CPU control ----------------------
@@ -104,7 +104,7 @@ end
 wire audio_done;
 wire audio_error;
 
-i2c_loader i2c_loader_( .CLK(CLOCK_24), .nRESET(reset), .I2C_SCL(I2C_SCLK), .I2C_SDA(I2C_SDAT), .IS_DONE(audio_done), .IS_ERROR(audio_error) );
+i2c_loader i2c_loader_( .CLK(CLOCK_24), .nRESET(nreset), .I2C_SCL(I2C_SCLK), .I2C_SDA(I2C_SDAT), .IS_DONE(audio_done), .IS_ERROR(audio_error) );
 
 assign AUD_DACLRCK = AUD_ADCLRCK;
 wire [15:0] pcm_inl;
@@ -112,11 +112,11 @@ wire [15:0] pcm_inr;
 reg  [15:0] pcm_outl;
 reg  [15:0] pcm_outr;
 
-i2s_intf i2s_intf_( .CLK(CLOCK_24), .nRESET(reset),
+i2s_intf i2s_intf_( .CLK(CLOCK_24), .nRESET(nreset),
     .PCM_INL(pcm_inl[15:0]), .PCM_INR(pcm_inr[15:0]), .PCM_OUTL(pcm_outl[15:0]), .PCM_OUTR(pcm_outr[15:0]),
     .I2S_MCLK(AUD_XCK), .I2S_LRCLK(AUD_ADCLRCK), .I2S_BCLK(AUD_BCLK), .I2S_DOUT(AUD_DACDAT), .I2S_DIN(AUD_ADCDAT) );
 
-// Show the beeper visually by dividing the frequency with some factor to generate blinks
+// Show the beeper visually by dividing the frequency with some factor to generate LED blinks
 reg beep;                           // Beeper latch
 reg [6:0] beepcnt;                  // Beeper counter
 always @(posedge beep)
@@ -142,7 +142,7 @@ ps2_keyboard ps2_keyboard_( .*, .clk(clk_cpu) );
 wire [4:0] key_row;
 zx_keyboard zx_keyboard_( .*, .clk(clk_cpu) );
 
-always @(*) // always_comb
+always_comb
 begin
     ula_data = 8'hFF;
     // Regular IO at every odd address: line-in and keyboard
