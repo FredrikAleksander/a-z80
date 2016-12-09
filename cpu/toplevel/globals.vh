@@ -23,11 +23,11 @@ wire ctl_state_iy_set;
 wire ctl_state_ixiy_clr;
 wire ctl_state_ixiy_we;
 wire ctl_state_halt_set;
-wire ctl_state_tbl_clr;
 wire ctl_state_tbl_ed_set;
 wire ctl_state_tbl_cb_set;
 wire ctl_state_alu;
 wire ctl_repeat_we;
+wire ctl_state_tbl_we;
 wire ctl_iff1_iff2;
 wire ctl_iffx_we;
 wire ctl_iffx_bit;
@@ -159,6 +159,7 @@ wire nRD_out;
 wire nWR_out;
 wire nIORQ_out;
 wire latch_wait;
+wire wait_m1;
 
 // Module: control/sequencer.v
 wire M1;

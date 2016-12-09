@@ -19,8 +19,12 @@
 #    run_tests = -1
 #    regress = 0
 #
+# Orthogonal to that, set m1wait to a non-zero value to test nWAIT insertion at
+# the first M1 cycle of an instruction. Change it to the number of T-clocks to
+# insert.
+#
 #-------------------------------------------------------------------------------
-#  Copyright (C) 2014  Goran Devic
+#  Copyright (C) 2016  Goran Devic
 #
 #  This program is free software; you can redistribute it and/or modify it
 #  under the terms of the GNU General Public License as published by the Free
@@ -40,9 +44,12 @@ start_test = "00"
 # Number of tests to run; use -1 to run all tests
 run_tests = 1
 
-# Set this to 1 to use regression test files instead of 'tests.*'
-# It will run all regression tests (start_test, run_tests are ignored)
+# Set this to 1 to use regression test instead of selected or full 'tests.*'
+# Regression test is a shorter set of tests and ignores start_test and run_tests values
 regress = 1
+
+# Set this to a number of WAIT cycles to add at M1 clock period or 0 not to test nWAIT
+m1wait = 0
 
 #------------------------------------------------------------------------------
 # Determine which test files to use
@@ -100,12 +107,11 @@ ftest.write("force dut.resets_.clrpc=0;\n")
 ftest.write("force dut.reg_file_.reg_gp_we=0;\n")
 ftest.write("force dut.reg_control_.ctl_reg_sys_we=0;\n")
 ftest.write("force dut.z80_top_ifc_n.fpga_reset=1;\n")
-ftest.write("#2\n")
+ftest.write("#2 // Start test loop\n\n")
 total_clks = total_clks + 2
 
 # Read each test from the testdat.in file
 while True:
-    ftest.write("//" + "-" * 80 + "\n")
     if len(t1)==0 or run_tests==0:
         break
     run_tests = run_tests-1
@@ -122,7 +128,7 @@ while True:
     # AF BC DE HL AF' BC' DE' HL' IX IY SP PC
     # I R IFF1 IFF2 IM <halted> <tstates>
     name = t1.pop(0)
-    ftest.write("$fdisplay(f,\"Testing opcode " + name + "\");\n")
+    ftest.write("   $fdisplay(f,\"Testing opcode " + name + "\");\n")
     name = name.split(" ")[0]
     r = t1.pop(0).split(' ')
     r = list(filter(None, r))
@@ -190,9 +196,9 @@ while True:
     ftest.write("   force dut.address_latch_.Q=16'h" + r[11] +";\n") # Force PC into the address latch
     ftest.write("   release dut.reg_control_.ctl_reg_sys_we;\n")
     ftest.write("   release dut.reg_file_.reg_gp_we;\n")
-    ftest.write("#3\n")             # 1T (#2) overlaps the reset cycle
-    total_clks = total_clks + 3     # We borrow 1T (#2) to to force the PC to be what our test wants...
-    ftest.write("   release dut.address_latch_.Q;\n")
+    ftest.write("#2 // Execute: M1/T1 start\n") # 1T (#2) overlaps the reset cycle
+    ftest.write("#1 release dut.address_latch_.Q;\n")
+    total_clks = total_clks + 3 # We borrow 1T (#2) to to force the PC to be what our test wants...
     ftest.write("#1\n")
     total_clks = total_clks + 1
 
@@ -215,7 +221,14 @@ while True:
 
     ticks = int(s[6]) * 2 - 2       # We return 1T (#2) that we borrowed to set PC
     total_clks = total_clks + ticks
-    ftest.write("#" + str(ticks) + " // Execute\n")
+
+    # Test WAIT state insertion at the M1 clock cycle
+    if m1wait:
+        ftest.write("   z.nWAIT <= 0;\n")
+        ftest.write("#" + str(m1wait * 2) + " z.nWAIT <= 1; // nWAIT during M1\n")
+        total_clks = total_clks + m1wait * 2
+
+    ftest.write("#" + str(ticks) + " // Wait for opcode end\n")
 
     ftest.write("   force dut.reg_control_.ctl_reg_sys_we=0;\n")
     ftest.write("#2 pc=z.A;\n")     # Extra 2T for the next instruction overlap & read PC on the ABus
@@ -278,10 +291,13 @@ while True:
     # Read a list of IO checks that was compiled while parsing the initial condition
     while len(check_io)>0:
         ftest.write(check_io.pop(0))
+    ftest.write("#1 // End opcode\n\n")
+    total_clks = total_clks + 1
 
 # Write out the total number of clocks that this set of tests takes to execute
 ftest.write("`define TOTAL_CLKS " + str(total_clks) + "\n")
 ftest.write("$fdisplay(f,\"=== Tests completed ===\");\n")
+ftest.close()
 
 # Touch a file that includes 'test_fuse.vh' to ensure it will recompile correctly
 os.utime("test_fuse.sv", None)

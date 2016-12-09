@@ -14,48 +14,73 @@
 
 // PROGRAM		"Quartus II 64-Bit"
 // VERSION		"Version 13.0.1 Build 232 06/12/2013 Service Pack 1 SJ Web Edition"
-// CREATED		"Fri Feb 26 22:23:08 2016"
+// CREATED		"Thu Dec 08 00:16:50 2016"
 
-module ir(
-	ctl_ir_we,
-	clk,
-	nreset,
-	hold_clk_wait,
-	db,
-	opcode
+module wait_state(
+	CLK,
+	nM1,
+	nMREQ,
+	nWAIT_M1,
+	nWAIT_Mem
 );
 
 
-input wire	ctl_ir_we;
-input wire	clk;
-input wire	nreset;
-input wire	hold_clk_wait;
-input wire	[7:0] db;
-output reg	[7:0] opcode;
+input wire	CLK;
+input wire	nM1;
+input wire	nMREQ;
+output wire	nWAIT_M1;
+output wire	nWAIT_Mem;
 
+reg	SYNTHESIZED_WIRE_1;
+reg	DFF_inst3;
+reg	DFF_inst2;
+reg	DFF_inst5;
 wire	SYNTHESIZED_WIRE_0;
-wire	SYNTHESIZED_WIRE_1;
+
+assign	nWAIT_M1 = DFF_inst2;
 
 
 
-
-assign	SYNTHESIZED_WIRE_0 =  ~hold_clk_wait;
-
-assign	SYNTHESIZED_WIRE_1 = ctl_ir_we & SYNTHESIZED_WIRE_0;
+assign	SYNTHESIZED_WIRE_0 =  ~SYNTHESIZED_WIRE_1;
 
 
-always@(posedge clk or negedge nreset)
+always@(posedge CLK or negedge DFF_inst3)
 begin
-if (!nreset)
+if (!DFF_inst3)
 	begin
-	opcode[7:0] <= 8'b00000000;
+	DFF_inst2 <= 1;
 	end
 else
-if (SYNTHESIZED_WIRE_1)
 	begin
-	opcode[7:0] <= db[7:0];
+	DFF_inst2 <= nM1;
 	end
 end
+
+
+always@(posedge CLK)
+begin
+	begin
+	DFF_inst3 <= DFF_inst2;
+	end
+end
+
+
+always@(posedge CLK)
+begin
+	begin
+	SYNTHESIZED_WIRE_1 <= nMREQ;
+	end
+end
+
+
+always@(posedge CLK)
+begin
+	begin
+	DFF_inst5 <= SYNTHESIZED_WIRE_1;
+	end
+end
+
+assign	nWAIT_Mem = ~(DFF_inst5 & SYNTHESIZED_WIRE_0);
 
 
 endmodule

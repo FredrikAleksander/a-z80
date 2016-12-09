@@ -23,7 +23,6 @@ decode_state decode_state_(
     .ctl_state_ixiy_clr (ctl_state_ixiy_clr),
     .ctl_state_ixiy_we (ctl_state_ixiy_we),
     .ctl_state_halt_set (ctl_state_halt_set),
-    .ctl_state_tbl_clr (ctl_state_tbl_clr),
     .ctl_state_tbl_ed_set (ctl_state_tbl_ed_set),
     .ctl_state_tbl_cb_set (ctl_state_tbl_cb_set),
     .ctl_state_alu (ctl_state_alu),
@@ -33,6 +32,8 @@ decode_state decode_state_(
     .in_intr (in_intr),
     .in_nmi (in_nmi),
     .nreset (nreset),
+    .ctl_state_tbl_we (ctl_state_tbl_we),
+    .hold_clk_wait (hold_clk_wait),
     .in_halt (in_halt),
     .table_cb (table_cb),
     .table_ed (table_ed),
@@ -48,11 +49,11 @@ execute execute_(
     .ctl_state_ixiy_clr (ctl_state_ixiy_clr),
     .ctl_state_ixiy_we (ctl_state_ixiy_we),
     .ctl_state_halt_set (ctl_state_halt_set),
-    .ctl_state_tbl_clr (ctl_state_tbl_clr),
     .ctl_state_tbl_ed_set (ctl_state_tbl_ed_set),
     .ctl_state_tbl_cb_set (ctl_state_tbl_cb_set),
     .ctl_state_alu (ctl_state_alu),
     .ctl_repeat_we (ctl_repeat_we),
+    .ctl_state_tbl_we (ctl_state_tbl_we),
     .ctl_iff1_iff2 (ctl_iff1_iff2),
     .ctl_iffx_we (ctl_iffx_we),
     .ctl_iffx_bit (ctl_iffx_bit),
@@ -200,6 +201,7 @@ ir ir_(
     .ctl_ir_we (ctl_ir_we),
     .clk (clk),
     .nreset (nreset),
+    .hold_clk_wait (hold_clk_wait),
     .db (db0[7:0]),
     .opcode (opcode)
 );
@@ -231,6 +233,7 @@ resets resets_(
     .M1 (M1),
     .T2 (T2),
     .fpga_reset (fpga_reset),
+    .hold_clk_wait (hold_clk_wait),
     .clrpc (clrpc),
     .nreset (nreset)
 );
@@ -255,7 +258,8 @@ memory_ifc memory_ifc_(
     .nRD_out (nRD_out),
     .nWR_out (nWR_out),
     .nIORQ_out (nIORQ_out),
-    .latch_wait (latch_wait)
+    .latch_wait (latch_wait),
+    .wait_m1 (wait_m1)
 );
 
 sequencer sequencer_(
@@ -495,6 +499,7 @@ reg_control reg_control_(
     .ctl_reg_sys_we (ctl_reg_sys_we),
     .clk (clk),
     .ctl_sw_4d (ctl_sw_4d),
+    .hold_clk_wait (hold_clk_wait),
     .ctl_reg_gp_hilo (ctl_reg_gp_hilo),
     .ctl_reg_gp_sel (ctl_reg_gp_sel),
     .ctl_reg_sys_hilo (ctl_reg_sys_hilo),
